@@ -8,7 +8,7 @@ Just a little program to build a MAME ROM playlist for the RetroArch frontend.
 
 2. Install Java 8 if you don't have it already
 
-3. If you're on linux, add the executable bit to the jar or you won't be able to launch it
+3. If you're on linux, add the executable bit to the jar or you won't be able to launch it (using the file explorer or `chmod +x MamePlaylistBuilder-1.0-SNAPSHOT.jar`)
 
 4. Launch MamePlaylistBuilder (if you can't do it with your file explorer, use `java -jar MamePlaylistBuilder-1.0-SNAPSHOT.jar`)
 
