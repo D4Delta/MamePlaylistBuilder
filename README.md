@@ -14,8 +14,8 @@ Just a little program to build a MAME ROM playlist for the RetroArch frontend.
 
 5. MamePlaylistBuilder will ask for the location of your MAME Roms folder. Select it, and confirm.
 
-6. A "MAME.lpl" should have been created; Drop it on
+6. A "MAME.lpl" should have been created; Copy it.
 
-7. If you're on linux, copy this file to `~/.config/retroarch/playlists`. If you're on Windows, the `playlists` folder is located in the same folder as retroarch.exe
+7. If you're on linux, paste this file to `~/.config/retroarch/playlists`. If you're on Windows, the `playlists` folder is located in the same folder as retroarch.exe
 
 8. Enjoy your (hopefully full) new playlist. 
