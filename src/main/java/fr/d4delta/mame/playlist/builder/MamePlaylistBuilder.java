@@ -48,7 +48,7 @@ public class MamePlaylistBuilder {
     
     
     public static void main(String[] args) {
-        if(args.length >= 2 && args[0].equalsIgnoreCase("buildNameDB")) {
+        if(args.length >= 2 && args[1].equalsIgnoreCase("buildNameDB")) {
             createNameDB();
         } else {
             createPlaylist();
@@ -111,7 +111,6 @@ public class MamePlaylistBuilder {
             Document mameXML = builder.parse(mameXMLFile);
             Element root = mameXML.getDocumentElement();
             NodeList machineList = root.getElementsByTagName("machine");
-            HashMap<String, String> romName2Name = new HashMap<>();
             
             for(int i = 0; i < machineList.getLength(); i++) {
                 Element machine = (Element)machineList.item(i);
