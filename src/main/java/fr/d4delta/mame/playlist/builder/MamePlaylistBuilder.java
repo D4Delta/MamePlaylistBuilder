@@ -102,35 +102,41 @@ public class MamePlaylistBuilder {
     }
     
     static void createNameDB() throws Exception {
-        JFileChooser chooser = new JFileChooser();
         JOptionPane.showMessageDialog(null, "Select the mame.xml");
-        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        chooser.showOpenDialog(null);
-        File mameXMLFile = chooser.getSelectedFile();
-        if(mameXMLFile == null) {
-            return;
-        }
-        File output = new File(NAME_DB);
-        JOptionPane.showMessageDialog(null, "Name Database will be generated after you close this message." + System.lineSeparator() + "Name Database will be saved in " + output.getAbsolutePath() + "." + System.lineSeparator() + "This will take a while, and I recommend increasing JVM's heap size to avoid swapping.");
-        
-        //Start doing actual stuff
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        try(PrintWriter writer = new PrintWriter(output, "UTF-8")) {
-            
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            
-            Document mameXML = builder.parse(mameXMLFile);
-            Element root = mameXML.getDocumentElement();
-            NodeList machineList = root.getElementsByTagName("machine");
-            
-            for(int i = 0; i < machineList.getLength(); i++) {
-                Element machine = (Element)machineList.item(i);
-                writer.println(machine.getAttribute("name") + "=" + machine.getElementsByTagName("description").item(0).getTextContent());
+        EventQueue.invokeAndWait(() -> {
+            try {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                chooser.showOpenDialog(null);
+                File mameXMLFile = chooser.getSelectedFile();
+                if(mameXMLFile == null) {
+                    return;
+                }
+                File output = new File(NAME_DB);
+                JOptionPane.showMessageDialog(null, "Name Database will be generated after you close this message." + System.lineSeparator() + "Name Database will be saved in " + output.getAbsolutePath() + "." + System.lineSeparator() + "This will take a while, and I recommend increasing JVM's heap size to avoid swapping.");
+
+                //Start doing actual stuff
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                try(PrintWriter writer = new PrintWriter(output, "UTF-8")) {
+
+                    DocumentBuilder builder = factory.newDocumentBuilder();
+
+                    Document mameXML = builder.parse(mameXMLFile);
+                    Element root = mameXML.getDocumentElement();
+                    NodeList machineList = root.getElementsByTagName("machine");
+
+                    for(int i = 0; i < machineList.getLength(); i++) {
+                        Element machine = (Element)machineList.item(i);
+                        writer.println(machine.getAttribute("name") + "=" + machine.getElementsByTagName("description").item(0).getTextContent());
+                    }
+
+
+                }
+                JOptionPane.showMessageDialog(null, "Done. The Name database has been saved to: " + output.getAbsolutePath());
+            } catch(Exception e) {
+                printException(e);
             }
-            
-            
-        }
-        JOptionPane.showMessageDialog(null, "Done. The Name database has been saved to: " + output.getAbsolutePath());
+        });
     }
     
     static void printException(Exception ex) {
@@ -150,7 +156,7 @@ public class MamePlaylistBuilder {
             } catch (IOException ex2) {
                 //Even converting it into a string using StringWriter failed; Trying to print it in the console (System.err)
                 JOptionPane.showMessageDialog(null, "There was an error, and this error could not be converted into a string. Please check the console for more details");
-                ex2.printStackTrace(System.err);
+                ex.printStackTrace(System.err);
             }
         }
     }
