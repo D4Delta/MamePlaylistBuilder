@@ -16,12 +16,15 @@
 
 package fr.d4delta.mame.playlist.builder;
 
+import java.awt.EventQueue;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Properties;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -48,49 +51,57 @@ public class MamePlaylistBuilder {
     
     
     public static void main(String[] args) {
-        if(args.length >= 2 && args[1].equalsIgnoreCase("buildNameDB")) {
-            createNameDB();
-        } else {
-            createPlaylist();
-        }
-    }
-    
-    static void createPlaylist() {
-        JOptionPane.showMessageDialog(null, "Please select your MAME rom directory.");
-        JFileChooser chooser = new JFileChooser();
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.showOpenDialog(null);
-        File mameRomsDir = chooser.getSelectedFile();
-        
-        if(mameRomsDir == null) {
-            return;
-        }
-        
-        File output = new File(MAME_LPL);
-        JOptionPane.showMessageDialog(null, "The playlist will be created after you close this message." + System.lineSeparator() + "It will be saved to: " + output.getAbsolutePath() + System.lineSeparator() + "This may take a while, depending on how much rom you own; You will get a notification when it's done.");
-        
-        Properties namesDB = new Properties();
-        try(InputStream inputStream = MamePlaylistBuilder.class.getResourceAsStream("/" + NAME_DB); PrintWriter writer = new PrintWriter(output)) {
-            namesDB.load(inputStream);
-            File[] files = mameRomsDir.listFiles((File pathname) -> !pathname.isDirectory());
-            for(File f: files) {
-                String romName = f.getName();
-                int dotIndex = romName.lastIndexOf(".");
-                romName = romName.substring(0, dotIndex);
-                String fullName = namesDB.getProperty(romName);
-                if(fullName != null) {
-                    writer.println(f.getAbsolutePath());
-                    writer.println(fullName);
-                    writer.println(LPL);
-                }
+        try {
+            if(args.length >= 2 && args[1].equalsIgnoreCase("buildNameDB")) {
+                createNameDB();
+            } else {
+                createPlaylist();
             }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Something went wrong. Here's some details:" + System.lineSeparator() + getStacktrace(ex));
+        } catch(Exception e) {
+            printException(e);
         }
-        JOptionPane.showMessageDialog(null, "Done! The playlist has been saved to: " + output.getAbsolutePath());
     }
     
-    static void createNameDB() {
+    static void createPlaylist() throws Exception {
+        JOptionPane.showMessageDialog(null, "Please select your MAME rom directory.");
+        EventQueue.invokeAndWait(() -> {
+            try {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                chooser.showOpenDialog(null);
+                File mameRomsDir = chooser.getSelectedFile();
+
+                if(mameRomsDir == null) {
+                    return;
+                }
+
+                File output = new File(MAME_LPL);
+                JOptionPane.showMessageDialog(null, "The playlist will be created after you close this message." + System.lineSeparator() + "It will be saved to: " + output.getAbsolutePath() + System.lineSeparator() + "This may take a while, depending on how much rom you own; You will get a notification when it's done.");
+
+                Properties namesDB = new Properties();
+                try(InputStream inputStream = MamePlaylistBuilder.class.getResourceAsStream("/" + NAME_DB); PrintWriter writer = new PrintWriter(output)) {
+                    namesDB.load(inputStream);
+                    File[] files = mameRomsDir.listFiles((File pathname) -> !pathname.isDirectory());
+                    for(File f: files) {
+                        String romName = f.getName();
+                        int dotIndex = romName.lastIndexOf(".");
+                        romName = romName.substring(0, dotIndex);
+                        String fullName = namesDB.getProperty(romName);
+                        if(fullName != null) {
+                            writer.println(f.getAbsolutePath());
+                            writer.println(fullName);
+                            writer.println(LPL);
+                        }
+                    }
+                }
+                JOptionPane.showMessageDialog(null, "Done! The playlist has been saved to: " + output.getAbsolutePath());
+            } catch(Exception e) {
+                printException(e);
+            }
+        });
+    }
+    
+    static void createNameDB() throws Exception {
         JFileChooser chooser = new JFileChooser();
         JOptionPane.showMessageDialog(null, "Select the mame.xml");
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -118,19 +129,29 @@ public class MamePlaylistBuilder {
             }
             
             
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Something went wrong. Here's some details:" + System.lineSeparator() + getStacktrace(ex));
         }
         JOptionPane.showMessageDialog(null, "Done. The Name database has been saved to: " + output.getAbsolutePath());
     }
     
-    static String getStacktrace(Exception ex) {
-        try(StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
-            ex.printStackTrace(pw);
-            return sw.toString();
-        } catch (IOException ex1) {
-            return "Could not convert exception stacktrace to string.";
-        }
+    static void printException(Exception ex) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+        Date date = new Date();
+        String now = dateFormat.format(date);
+        File logFile = new File("MamePlaylistBuilder-Crash-" + now + ".txt");
         
+        try(PrintWriter pw = new PrintWriter(logFile)) {
+            ex.printStackTrace(pw);
+            JOptionPane.showMessageDialog(null, "An error has occured. The crash log has been saved to : " + logFile + System.lineSeparator() + System.lineSeparator() + "If you report this bug, please copy the content of this log along with your bug report.");
+        } catch (IOException ex1) {
+            //Writing the crash log failed; Trying to print it in a dialog
+            try(StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
+                ex.printStackTrace(pw);
+                JOptionPane.showMessageDialog(null, "There was an error, and this error could not be written in a log file. Here are the details:" + System.lineSeparator() + System.lineSeparator() + sw.toString() + System.lineSeparator() + System.lineSeparator() + "If you report this bug, please attach a screenshot of this dialog along with your bug report.");
+            } catch (IOException ex2) {
+                //Even converting it into a string using StringWriter failed; Trying to print it in the console (System.err)
+                JOptionPane.showMessageDialog(null, "There was an error, and this error could not be converted into a string. Please check the console for more details");
+                ex2.printStackTrace(System.err);
+            }
+        }
     }
 }
